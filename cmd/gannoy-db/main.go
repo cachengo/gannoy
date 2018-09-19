@@ -23,7 +23,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/lestrrat/go-server-starter/listener"
 	"github.com/monochromegane/conflag"
-	"github.com/monochromegane/gannoy"
+	"github.com/cachengo/gannoy"
 	"github.com/nightlyone/lockfile"
 )
 
@@ -47,6 +47,11 @@ type Feature struct {
 type FeatureWithKey struct {
 	Key int       `json:"key"`
 	W   []float64 `json:"features"`
+}
+
+type SearchResponse struct {
+    Indexes []int `json:"indexes"`
+    Distances []float64 `json:"distances"`
 }
 
 func main() {
@@ -169,10 +174,12 @@ loop:
 		}
 
 		gannoy := databases[database]
-		r, err := gannoy.GetNnsByKey(key, limit, -1)
-		if err != nil || len(r) == 0 {
+		ixs, ds, err := gannoy.GetNns(key, limit, -1)
+		if err != nil || len(ixs) == 0 {
 			return c.NoContent(http.StatusNotFound)
 		}
+
+		r := SearchResponse{Indexes: ixs, Distances: ds}
 
 		return c.JSON(http.StatusOK, r)
 	})
